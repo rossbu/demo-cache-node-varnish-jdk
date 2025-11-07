@@ -1,9 +1,7 @@
 # Gradle
 backend/.gradle/
 backend/build/
-backend/gradle/
 backend/gradlew.bat
-backend/.gradle
 backend/*.log
 
 # IDE
