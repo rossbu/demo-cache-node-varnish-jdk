@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cache Demo - Frontend</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-align: center;
+        }
+        
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        
+        .flow-diagram {
+            background: #f5f7fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+            font-family: monospace;
+            font-size: 14px;
+            color: #555;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            flex: 1;
+            min-width: 150px;
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        
+        #fetchBtn {
+            background: #667eea;
+            color: white;
+        }
+        
+        #fetchBtn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        #clearBtn {
+            background: #f093fb;
+            color: white;
+        }
+        
+        #clearBtn:hover {
+            background: #e57ff0;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(240, 147, 251, 0.4);
+        }
+        
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        
+        .status.loading {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.hidden {
+            display: none;
+        }
+        
+        .cache-info {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        
+        .cache-info h3 {
+            color: #1976D2;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+        
+        .cache-stat {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #bbdefb;
+        }
+        
+        .cache-stat:last-child {
+            border-bottom: none;
+        }
+        
+        .cache-stat-label {
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .cache-stat-value {
+            color: #1976D2;
+            font-family: monospace;
+        }
+        
+        .response-data {
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .response-data h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+        
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Cache Demo</h1>
+        <p class="subtitle">Frontend → Varnish Cache → Spring Boot Backend</p>
+        
+        <div class="flow-diagram">
+            Frontend (Port 3000) → Varnish (Port 8081) → Backend (Port 8080)
+        </div>
+        
+        <div class="controls">
+            <button id="fetchBtn">Fetch Data via Varnish</button>
+            <button id="clearBtn">Clear Display</button>
+        </div>
+        
+        <div id="status" class="status hidden"></div>
+        
+        <div id="cacheInfo" class="cache-info hidden">
+            <h3>📊 Cache Information</h3>
+            <div class="cache-stat">
+                <span class="cache-stat-label">Cache Status:</span>
+                <span class="cache-stat-value" id="cacheStatus">-</span>
+            </div>
+            <div class="cache-stat">
+                <span class="cache-stat-label">Cache Hits:</span>
+                <span class="cache-stat-value" id="cacheHits">-</span>
+            </div>
+            <div class="cache-stat">
+                <span class="cache-stat-label">Response Time:</span>
+                <span class="cache-stat-value" id="responseTime">-</span>
+            </div>
+            <div class="cache-stat">
+                <span class="cache-stat-label">Timestamp:</span>
+                <span class="cache-stat-value" id="timestamp">-</span>
+            </div>
+        </div>
+        
+        <div id="responseContainer" class="response-data hidden">
+            <h3>📦 Response Data</h3>
+            <pre id="responseData"></pre>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8081/api/data';
+        
+        const fetchBtn = document.getElementById('fetchBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const statusDiv = document.getElementById('status');
+        const cacheInfo = document.getElementById('cacheInfo');
+        const responseContainer = document.getElementById('responseContainer');
+        const responseData = document.getElementById('responseData');
+        
+        async function fetchData() {
+            const startTime = performance.now();
+            
+            statusDiv.textContent = '⏳ Fetching data from backend via Varnish cache...';
+            statusDiv.className = 'status loading';
+            
+            fetchBtn.disabled = true;
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                const endTime = performance.now();
+                const responseTime = (endTime - startTime).toFixed(2);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                
+                // Display cache information
+                document.getElementById('cacheStatus').textContent = 
+                    response.headers.get('X-Cache') || 'UNKNOWN';
+                document.getElementById('cacheHits').textContent = 
+                    response.headers.get('X-Cache-Hits') || '0';
+                document.getElementById('responseTime').textContent = `${responseTime} ms`;
+                document.getElementById('timestamp').textContent = 
+                    new Date().toLocaleTimeString();
+                
+                cacheInfo.classList.remove('hidden');
+                
+                // Display response data
+                responseData.textContent = JSON.stringify(data, null, 2);
+                responseContainer.classList.remove('hidden');
+                
+                statusDiv.textContent = '✅ Data fetched successfully!';
+                statusDiv.className = 'status success';
+                
+            } catch (error) {
+                console.error('Error:', error);
+                statusDiv.textContent = `❌ Error: ${error.message}. Make sure all services are running!`;
+                statusDiv.className = 'status error';
+                cacheInfo.classList.add('hidden');
+                responseContainer.classList.add('hidden');
+            } finally {
+                fetchBtn.disabled = false;
+            }
+        }
+        
+        function clearDisplay() {
+            statusDiv.className = 'status hidden';
+            cacheInfo.classList.add('hidden');
+            responseContainer.classList.add('hidden');
+        }
+        
+        fetchBtn.addEventListener('click', fetchData);
+        clearBtn.addEventListener('click', clearDisplay);
+        
+        // Optional: Auto-fetch on page load
+        // window.addEventListener('load', fetchData);
+    </script>
+</body>
+</html>

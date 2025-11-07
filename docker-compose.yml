@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: demo-backend
+    ports:
+      - "8080:8080"
+    networks:
+      - demo-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/api/data"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  varnish:
+    image: varnish:7.4
+    container_name: demo-varnish
+    ports:
+      - "8081:80"
+    volumes:
+      - ./varnish/default.vcl:/etc/varnish/default.vcl:ro
+    environment:
+      - VARNISH_SIZE=128M
+    command: ["-p", "default_ttl=60", "-p", "default_grace=3600"]
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - demo-network
+    healthcheck:
+      test: ["CMD", "varnishadm", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: demo-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - varnish
+    networks:
+      - demo-network
+
+networks:
+  demo-network:
+    driver: bridge
