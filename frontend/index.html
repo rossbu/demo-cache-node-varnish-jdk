@@ -253,7 +253,7 @@
     </div>
 
     <script>
-        const API_URL = 'http://localhost:8081/api/data';
+        const API_URL = window.location.protocol + '//' + window.location.hostname + ':8081/api/data';
         
         const fetchBtn = document.getElementById('fetchBtn');
         const clearBtn = document.getElementById('clearBtn');

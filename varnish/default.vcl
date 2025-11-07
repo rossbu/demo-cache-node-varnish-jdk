@@ -55,7 +55,8 @@ sub vcl_deliver {
         set resp.http.X-Cache = "MISS";
     }
     
-    # Add CORS headers for frontend
+    # Add CORS headers for frontend (NOTE: Using '*' for demo purposes only)
+    # In production, restrict to specific origins
     set resp.http.Access-Control-Allow-Origin = "*";
     set resp.http.Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS";
     set resp.http.Access-Control-Allow-Headers = "Content-Type";
