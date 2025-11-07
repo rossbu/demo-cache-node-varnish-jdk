@@ -1,6 +1,5 @@
 # Gradle
 backend/.gradle/
-backend/build/
 backend/gradlew.bat
 backend/*.log
 

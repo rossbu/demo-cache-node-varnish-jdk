@@ -33,7 +33,14 @@ git clone https://github.com/rossbu/demo-cache-node-varnish-jdk.git
 cd demo-cache-node-varnish-jdk
 ```
 
-2. Start all services:
+2. Build the backend (requires JDK 21):
+```bash
+cd backend
+./gradlew build -x test
+cd ..
+```
+
+3. Start all services:
 ```bash
 docker-compose up --build
 ```
