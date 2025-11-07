@@ -1,0 +1,18 @@
+# Gradle
+backend/.gradle/
+backend/gradlew.bat
+backend/*.log
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+*.log
